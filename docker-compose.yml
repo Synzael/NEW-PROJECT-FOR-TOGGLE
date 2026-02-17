@@ -1,0 +1,49 @@
+services:
+  # --- Production ---
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8787:8787"
+    environment:
+      - NODE_ENV=production
+      - PORT=8787
+    profiles:
+      - prod
+
+  # --- Development: Server ---
+  server-dev:
+    image: node:20-alpine
+    working_dir: /app/server
+    command: sh -c "npm install && npx nodemon index.js"
+    ports:
+      - "8787:8787"
+    volumes:
+      - ./server:/app/server
+      - server_node_modules:/app/server/node_modules
+    environment:
+      - PORT=8787
+    profiles:
+      - dev
+
+  # --- Development: Client ---
+  client-dev:
+    image: node:20-alpine
+    working_dir: /app/client
+    command: sh -c "npm install && npx vite --host 0.0.0.0"
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./client:/app/client
+      - client_node_modules:/app/client/node_modules
+    environment:
+      - VITE_API_TARGET=http://server-dev:8787
+    depends_on:
+      - server-dev
+    profiles:
+      - dev
+
+volumes:
+  server_node_modules:
+  client_node_modules:
